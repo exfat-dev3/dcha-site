@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DchaVideo - 動画サイト</title>
+    <title>DchaVideo</title>
     <!-- Material Design 2 / Google Fonts & Material Icons -->
-    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        /* Material Design 2 っぽいベーススタイル */
         body {
             font-family: 'Roboto', sans-serif;
             margin: 0;
@@ -16,9 +15,9 @@
             color: #212121;
         }
         header {
-            background-color: #6200ee; /* MD2 Primary Color */
+            background-color: #6200ee;
             color: white;
-            padding: 16px 24px;
+            padding: 12px 24px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             display: flex;
             justify-content: space-between;
@@ -29,18 +28,44 @@
             font-size: 20px;
             font-weight: 500;
         }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn {
+            background-color: #03dac6;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.2);
+        }
+        .btn-login {
+            background-color: #5865f2;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+            box-shadow: none;
+        }
         .container {
             max-width: 1200px;
             margin: 24px auto;
             padding: 0 16px;
         }
-        /* 動画カードを並べるグリッド */
         .video-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 24px;
         }
-        /* MD2 カードデザイン */
         .video-card {
             background: white;
             border-radius: 4px;
@@ -55,15 +80,12 @@
         .thumbnail-container {
             position: relative;
             width: 100%;
-            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            padding-top: 56.25%;
             background-color: #e0e0e0;
         }
         .thumbnail-container img {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             object-fit: cover;
         }
         .video-info {
@@ -75,9 +97,14 @@
             margin: 0 0 8px 0;
             line-height: 1.4;
         }
+        .video-meta {
+            font-size: 12px;
+            color: #757575;
+            margin-bottom: 8px;
+        }
         .video-description {
             font-size: 14px;
-            color: #757575;
+            color: #616161;
             margin: 0;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -85,7 +112,7 @@
             overflow: hidden;
         }
 
-        /* モーダルプレイヤー（動画再生用） */
+        /* モーダル */
         .modal {
             display: none;
             position: fixed;
@@ -98,7 +125,7 @@
         .modal-content {
             background: white;
             width: 90%;
-            max-width: 800px;
+            max-width: 700px;
             border-radius: 4px;
             overflow: hidden;
             box-shadow: 0 11px 15px -7px rgba(0,0,0,0.2);
@@ -113,20 +140,32 @@
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
         }
+        .modal-body {
+            padding: 20px;
+        }
         .modal-footer {
-            padding: 16px;
+            padding: 12px 20px;
             display: flex;
             justify-content: flex-end;
+            gap: 12px;
+            background-color: #fafafa;
         }
-        .btn {
-            background-color: #6200ee;
-            color: white;
-            border: none;
-            padding: 10px 16px;
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #666;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
             border-radius: 4px;
-            font-weight: 500;
-            cursor: pointer;
-            text-transform: uppercase;
+            font-family: inherit;
         }
     </style>
 </head>
@@ -134,14 +173,23 @@
 
     <header>
         <h1>DchaVideo</h1>
-        <div id="user-info">ログイン中</div>
+        <div class="header-actions" id="user-area">
+            <a href="/auth/discord" class="btn btn-login">
+                <span class="material-icons">login</span> Discordでログイン
+            </a>
+        </div>
     </header>
 
     <div class="container">
-        <h2>動画一覧</h2>
-        <!-- 動画カードが並ぶエリア -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2>動画一覧</h2>
+            <button class="btn" id="post-btn" style="display: none;" onclick="openPostModal()">
+                <span class="material-icons">add</span> 動画を投稿
+            </button>
+        </div>
+
         <div class="video-grid" id="video-grid">
-            <!-- JavaScriptで動的にカードを差し込みます -->
+            <!-- 動画カードが動的に読み込まれます -->
         </div>
     </div>
 
@@ -152,62 +200,136 @@
                 <iframe id="video-player" src="" frameborder="0" allowfullscreen></iframe>
             </div>
             <div class="modal-footer">
-                <button class="btn" onclick="closeModal()">閉じる</button>
+                <button class="btn btn-secondary" onclick="closePlayerModal()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 動画投稿モーダル -->
+    <div class="modal" id="post-modal">
+        <div class="modal-content">
+            <div class="modal-body">
+                <h3 style="margin-top: 0;">新規動画投稿</h3>
+                <div class="form-group">
+                    <label>タイトル</label>
+                    <input type="text" id="post-title" placeholder="動画のタイトル">
+                </div>
+                <div class="form-group">
+                    <label>YouTube 動画ID</label>
+                    <input type="text" id="post-youtube-id" placeholder="例: dQw4w9WgXcQ">
+                </div>
+                <div class="form-group">
+                    <label>説明文</label>
+                    <textarea id="post-description" rows="3" placeholder="動画の簡単な説明"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePostModal()">キャンセル</button>
+                <button class="btn" onclick="submitVideo()">投稿する</button>
             </div>
         </div>
     </div>
 
     <script>
-        // サンプルの動画データ（あとでサーバーのAPIから取得するようにできます！）
-        const sampleVideos = [
-            {
-                title: "チャレンジパッドを改造してみた",
-                description: "懐かしのチャレンジパッドにカスタムOSを導入して遊ぶ動画です。",
-                thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
-                youtubeId: "dQw4w9WgXcQ"
-            },
-            {
-                title: "レトロガジェットの紹介",
-                description: "家で眠っていた古い端末やデバイスを動かしてみました。",
-                thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
-                youtubeId: "dQw4w9WgXcQ"
+        // ログイン状態の確認
+        async function checkUser() {
+            try {
+                const res = await fetch('/api/user');
+                if (res.ok) {
+                    const user = await res.json();
+                    document.getElementById('user-area').innerHTML = `
+                        <span style="font-size: 14px;">👤 ${user.username}</span>
+                        <a href="/logout" style="color: white; font-size: 12px; margin-left: 8px;">ログアウト</a>
+                    `;
+                    document.getElementById('post-btn').style.display = 'inline-flex';
+                }
+            } catch (e) {}
+        }
+
+        // 動画一覧の取得・描画
+        async function loadVideos() {
+            try {
+                const res = await fetch('/api/videos');
+                const videos = await res.json();
+                const grid = document.getElementById('video-grid');
+                grid.innerHTML = '';
+
+                videos.forEach(video => {
+                    const card = document.createElement('div');
+                    card.className = 'video-card';
+                    card.innerHTML = `
+                        <div class="thumbnail-container">
+                            <img src="${video.thumbnail}" alt="サムネイル">
+                        </div>
+                        <div class="video-info">
+                            <h3 class="video-title">${video.title}</h3>
+                            <div class="video-meta">投稿者: ${video.author || '不明'}</div>
+                            <p class="video-description">${video.description}</p>
+                        </div>
+                    `;
+                    card.onclick = () => openPlayerModal(video.id);
+                    grid.appendChild(card);
+                });
+            } catch (e) {
+                console.error('動画取得エラー:', e);
             }
-        ];
+        }
 
-        // 動画カードを画面に描画する
-        const grid = document.getElementById('video-grid');
-        sampleVideos.forEach(video => {
-            const card = document.createElement('div');
-            card.className = 'video-card';
-            card.innerHTML = `
-                <div class="thumbnail-container">
-                    <img src="${video.thumbnail}" alt="サムネイル">
-                </div>
-                <div class="video-info">
-                    <h3 class="video-title">${video.title}</h3>
-                    <p class="video-description">${video.description}</p>
-                </div>
-            `;
-            // カードをクリックしたらモーダルで動画を開く
-            card.onclick = () => openModal(video.youtubeId);
-            grid.appendChild(card);
-        });
-
-        // モーダルを開く
-        function openModal(youtubeId) {
+        // 再生モーダル
+        function openPlayerModal(youtubeId) {
             const modal = document.getElementById('video-modal');
             const player = document.getElementById('video-player');
             player.src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1`;
             modal.style.display = 'flex';
         }
 
-        // モーダルを閉じる
-        function closeModal() {
+        function closePlayerModal() {
             const modal = document.getElementById('video-modal');
             const player = document.getElementById('video-player');
-            player.src = ''; // 停止する
+            player.src = '';
             modal.style.display = 'none';
         }
+
+        // 投稿モーダル
+        function openPostModal() {
+            document.getElementById('post-modal').style.display = 'flex';
+        }
+
+        function closePostModal() {
+            document.getElementById('post-modal').style.display = 'none';
+        }
+
+        // 動画の送信
+        async function submitVideo() {
+            const title = document.getElementById('post-title').value;
+            const youtubeId = document.getElementById('post-youtube-id').value;
+            const description = document.getElementById('post-description').value;
+
+            if (!title || !youtubeId) {
+                alert('タイトルとYouTube IDを入力してください。');
+                return;
+            }
+
+            const res = await fetch('/api/videos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, youtubeId, description })
+            });
+
+            if (res.ok) {
+                closePostModal();
+                document.getElementById('post-title').value = '';
+                document.getElementById('post-youtube-id').value = '';
+                document.getElementById('post-description').value = '';
+                loadVideos(); // 一覧を更新
+            } else {
+                alert('投稿に失敗しました。');
+            }
+        }
+
+        // 初期化
+        checkUser();
+        loadVideos();
     </script>
 </body>
 </html>
