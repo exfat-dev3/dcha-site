@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DchaVideo - 動画サイト</title>
+    <!-- Material Design 2 / Google Fonts & Material Icons -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* Material Design 2 っぽいベーススタイル */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: #f5f5f5;
+            color: #212121;
+        }
+        header {
+            background-color: #6200ee; /* MD2 Primary Color */
+            color: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 24px auto;
+            padding: 0 16px;
+        }
+        /* 動画カードを並べるグリッド */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        /* MD2 カードデザイン */
+        .video-card {
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 1px -1px rgba(0,0,0,0.2), 0 1px 1px 0 rgba(0,0,0,0.14), 0 1px 3px 0 rgba(0,0,0,0.12);
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .video-card:hover {
+            box-shadow: 0 5px 5px -3px rgba(0,0,0,0.2), 0 8px 10px 1px rgba(0,0,0,0.14), 0 3px 14px 2px rgba(0,0,0,0.12);
+        }
+        .thumbnail-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            background-color: #e0e0e0;
+        }
+        .thumbnail-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .video-info {
+            padding: 16px;
+        }
+        .video-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0 0 8px 0;
+            line-height: 1.4;
+        }
+        .video-description {
+            font-size: 14px;
+            color: #757575;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* モーダルプレイヤー（動画再生用） */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 11px 15px -7px rgba(0,0,0,0.2);
+        }
+        .player-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            background: black;
+        }
+        .player-container iframe {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+        .modal-footer {
+            padding: 16px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .btn {
+            background-color: #6200ee;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>DchaVideo</h1>
+        <div id="user-info">ログイン中</div>
+    </header>
+
+    <div class="container">
+        <h2>動画一覧</h2>
+        <!-- 動画カードが並ぶエリア -->
+        <div class="video-grid" id="video-grid">
+            <!-- JavaScriptで動的にカードを差し込みます -->
+        </div>
+    </div>
+
+    <!-- 動画再生モーダル -->
+    <div class="modal" id="video-modal">
+        <div class="modal-content">
+            <div class="player-container">
+                <iframe id="video-player" src="" frameborder="0" allowfullscreen></iframe>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // サンプルの動画データ（あとでサーバーのAPIから取得するようにできます！）
+        const sampleVideos = [
+            {
+                title: "チャレンジパッドを改造してみた",
+                description: "懐かしのチャレンジパッドにカスタムOSを導入して遊ぶ動画です。",
+                thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+                youtubeId: "dQw4w9WgXcQ"
+            },
+            {
+                title: "レトロガジェットの紹介",
+                description: "家で眠っていた古い端末やデバイスを動かしてみました。",
+                thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+                youtubeId: "dQw4w9WgXcQ"
+            }
+        ];
+
+        // 動画カードを画面に描画する
+        const grid = document.getElementById('video-grid');
+        sampleVideos.forEach(video => {
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.innerHTML = `
+                <div class="thumbnail-container">
+                    <img src="${video.thumbnail}" alt="サムネイル">
+                </div>
+                <div class="video-info">
+                    <h3 class="video-title">${video.title}</h3>
+                    <p class="video-description">${video.description}</p>
+                </div>
+            `;
+            // カードをクリックしたらモーダルで動画を開く
+            card.onclick = () => openModal(video.youtubeId);
+            grid.appendChild(card);
+        });
+
+        // モーダルを開く
+        function openModal(youtubeId) {
+            const modal = document.getElementById('video-modal');
+            const player = document.getElementById('video-player');
+            player.src = `https://www.youtube.com/embed/${youtubeId}?autoplay=1`;
+            modal.style.display = 'flex';
+        }
+
+        // モーダルを閉じる
+        function closeModal() {
+            const modal = document.getElementById('video-modal');
+            const player = document.getElementById('video-player');
+            player.src = ''; // 停止する
+            modal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
