@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アカウント管理 - DchaVideo</title>
+    <!-- Material Design 2 / Google Fonts & Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: #f5f5f5;
+            color: #212121;
+        }
+        header {
+            background-color: #6200ee;
+            color: white;
+            padding: 12px 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        .container {
+            max-width: 900px;
+            margin: 24px auto;
+            padding: 0 16px;
+        }
+        .card {
+            background: white;
+            border-radius: 4px;
+            padding: 24px;
+            box-shadow: 0 2px 1px -1px rgba(0,0,0,0.2), 0 1px 1px 0 rgba(0,0,0,0.14), 0 1px 3px 0 rgba(0,0,0,0.12);
+            margin-bottom: 24px;
+        }
+        .btn {
+            background-color: #6200ee;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-danger {
+            background-color: #b00020;
+        }
+        .btn-secondary {
+            background-color: #03dac6;
+            color: #000;
+        }
+        .video-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .video-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>アカウント管理</h1>
+        <a href="/" class="btn btn-secondary">
+            <span class="material-icons">home</span> トップへ戻る
+        </a>
+    </header>
+
+    <div class="container">
+        <!-- プロフィール情報 -->
+        <div class="card" id="user-profile">
+            <h3>プロフィール</h3>
+            <p>読み込み中...</p>
+        </div>
+
+        <!-- 投稿動画管理 -->
+        <div class="card">
+            <h3>自分が投稿した動画</h3>
+            <div id="my-videos-list">
+                <p>読み込み中...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ユーザー情報と投稿動画の読み込み
+        async function loadAccountData() {
+            try {
+                // ログイン確認
+                const userRes = await fetch('/api/user');
+                if (!userRes.ok) {
+                    alert('ログインしていません。');
+                    window.location.href = '/';
+                    return;
+                }
+                const user = await userRes.json();
+                
+                // プロフィール表示
+                document.getElementById('user-profile').innerHTML = `
+                    <h3 style="margin-top:0;">プロフィール</h3>
+                    <p><strong>ユーザー名:</strong> ${user.username}</p>
+                    <p><strong>Discord ID:</strong> ${user.id}</p>
+                `;
+
+                // 動画一覧を取得して自分の投稿だけに絞り込む
+                const videosRes = await fetch('/api/videos');
+                const videos = await videosRes.json();
+                const myVideos = videos.filter(v => v.author === user.username);
+
+                const listEl = document.getElementById('my-videos-list');
+                if (myVideos.length === 0) {
+                    listEl.innerHTML = '<p style="color: #666;">投稿した動画はありません。</p>';
+                    return;
+                }
+
+                listEl.innerHTML = '';
+                myVideos.forEach(v => {
+                    const item = document.createElement('div');
+                    item.className = 'video-item';
+                    item.innerHTML = `
+                        <div>
+                            <strong>${v.title}</strong><br>
+                            <small style="color: #666;">YouTube ID: ${v.id}</small>
+                        </div>
+                        <button class="btn btn-danger" onclick="deleteVideo('${v.id}')">削除</button>
+                    `;
+                    listEl.appendChild(item);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // 動画削除処理
+        async function deleteVideo(id) {
+            if (!confirm('本当にこの動画を削除しますか？')) return;
+
+            const res = await fetch(`/api/videos/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                alert('動画を削除しました。');
+                loadAccountData(); // リストを再読み込み
+            } else {
+                alert('削除に失敗しました。');
+            }
+        }
+
+        loadAccountData();
+    </script>
+</body>
+</html>

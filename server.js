@@ -137,3 +137,32 @@ app.post('/api/videos', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+// 【追加】動画を削除するAPI
+app.delete('/api/videos/:id', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'ログインしてください' });
+    }
+
+    const videoId = req.params.id;
+    const videoIndex = videos.findIndex(v => v.id === videoId);
+
+    if (videoIndex === -1) {
+        return res.status(404).json({ error: '動画が見つかりませんでした' });
+    }
+
+    const targetVideo = videos[videoIndex];
+
+    // 投稿者本人、もしくは特定の管理者（例: maron_dayo）だけが削除できるようにする
+    // ※Discordのusernameやidで判定します
+    const isAuthor = targetVideo.authorId === req.session.user.id || targetVideo.author === req.session.user.username;
+    // 必要であれば管理者のIDやユーザー名をここで追加できます（例: req.session.user.username === 'your_admin_name'）
+
+    if (!isAuthor) {
+        return res.status(403).json({ error: 'この動画を削除する権限がありません' });
+    }
+
+    // 動画リストから削除
+    videos.splice(videoIndex, 1);
+    res.json({ success: true });
+});

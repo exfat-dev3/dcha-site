@@ -231,19 +231,21 @@
     </div>
 
     <script>
-        // ログイン状態の確認
+        // ログイン状態の確認と表示切り替え
         async function checkUser() {
             try {
                 const res = await fetch('/api/user');
                 if (res.ok) {
                     const user = await res.json();
                     document.getElementById('user-area').innerHTML = `
-                        <span style="font-size: 14px;">👤 ${user.username}</span>
-                        <a href="/logout" style="color: white; font-size: 12px; margin-left: 8px;">ログアウト</a>
+                        <a href="/account.html" style="color: white; text-decoration: none; font-size: 14px; margin-right: 8px;">👤 ${user.username}</a>
+                        <a href="/logout" style="color: #ff8080; font-size: 12px; text-decoration: none;">ログアウト</a>
                     `;
                     document.getElementById('post-btn').style.display = 'inline-flex';
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error('ログインチェックエラー:', e);
+            }
         }
 
         // 動画一覧の取得・描画
@@ -275,7 +277,7 @@
             }
         }
 
-        // 再生モーダル
+        // 再生モーダルの開閉
         function openPlayerModal(youtubeId) {
             const modal = document.getElementById('video-modal');
             const player = document.getElementById('video-player');
@@ -290,7 +292,7 @@
             modal.style.display = 'none';
         }
 
-        // 投稿モーダル
+        // 投稿モーダルの開閉
         function openPostModal() {
             document.getElementById('post-modal').style.display = 'flex';
         }
@@ -299,7 +301,7 @@
             document.getElementById('post-modal').style.display = 'none';
         }
 
-        // 動画の送信
+        // 動画の新規投稿
         async function submitVideo() {
             const title = document.getElementById('post-title').value;
             const youtubeId = document.getElementById('post-youtube-id').value;
@@ -321,13 +323,13 @@
                 document.getElementById('post-title').value = '';
                 document.getElementById('post-youtube-id').value = '';
                 document.getElementById('post-description').value = '';
-                loadVideos(); // 一覧を更新
+                loadVideos(); // 一覧を再読み込み
             } else {
                 alert('投稿に失敗しました。');
             }
         }
 
-        // 初期化
+        // ページロード時に初期化
         checkUser();
         loadVideos();
     </script>
