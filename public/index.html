@@ -60,14 +60,14 @@
     <div class="modal" id="upload-modal">
         <div class="modal-content">
             <div class="modal-body">
-                <h3 style="margin-top: 0;">ファイルを追加</h3>
+                <h3 style="margin-top: 0;">ファイルをアップロード</h3>
                 <div class="form-group">
-                    <label>ファイル名 / タイトル</label>
+                    <label>タイトル</label>
                     <input type="text" id="file-title" placeholder="例: maroidOS v1.0.apk">
                 </div>
                 <div class="form-group">
-                    <label>ダウンロードURL (GitHub等)</label>
-                    <input type="text" id="file-url" placeholder="https://github.com/...">
+                    <label>ファイルを選択</label>
+                    <input type="file" id="file-input" style="padding: 6px 0;">
                 </div>
                 <div class="form-group">
                     <label>説明文</label>
@@ -76,7 +76,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal()">キャンセル</button>
-                <button class="btn" onclick="submitFile()">追加する</button>
+                <button class="btn" onclick="submitFile()">アップロード</button>
             </div>
         </div>
     </div>
@@ -135,28 +135,32 @@
 
         async function submitFile() {
             const title = document.getElementById('file-title').value;
-            const fileUrl = document.getElementById('file-url').value;
+            const fileInput = document.getElementById('file-input');
             const description = document.getElementById('file-desc').value;
 
-            if (!title || !fileUrl) {
-                alert('タイトルとダウンロードURLを入力してください。');
+            if (!title || fileInput.files.length === 0) {
+                alert('タイトルとファイルを選択してください。');
                 return;
             }
 
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('description', description);
+            formData.append('file', fileInput.files[0]);
+
             const res = await fetch('/api/files', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, fileUrl, description })
+                body: formData
             });
 
             if (res.ok) {
                 closeModal();
                 document.getElementById('file-title').value = '';
-                document.getElementById('file-url').value = '';
+                document.getElementById('file-input').value = '';
                 document.getElementById('file-desc').value = '';
                 loadFiles();
             } else {
-                alert('追加に失敗しました。');
+                alert('アップロードに失敗しました。');
             }
         }
 
