@@ -10,9 +10,7 @@
         body { font-family: 'Roboto', sans-serif; margin: 0; background-color: #f5f5f5; color: #212121; }
         header { background-color: #6200ee; color: white; padding: 12px 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center; }
         header h1 { margin: 0; font-size: 20px; font-weight: 500; }
-        .header-actions { display: flex; align-items: center; gap: 12px; }
         .btn { background-color: #03dac6; color: #000; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 500; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 2px rgba(0,0,0,0.2); }
-        .btn-login { background-color: #5865f2; color: white; }
         .btn-secondary { background-color: #e0e0e0; color: #333; box-shadow: none; }
         .container { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
         .file-list { display: flex; flex-direction: column; gap: 12px; }
@@ -36,21 +34,13 @@
 
     <header>
         <h1>DchaFiles</h1>
-        <div class="header-actions" id="user-area">
-            <a href="/auth/discord" class="btn btn-login">
-                <span class="material-icons">login</span> Discordでログイン
-            </a>
-        </div>
+        <button class="btn" onclick="openModal()">
+            <span class="material-icons">upload</span> ファイルを追加
+        </button>
     </header>
 
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h2>ファイル一覧</h2>
-            <button class="btn" id="upload-btn" style="display: none;" onclick="openModal()">
-                <span class="material-icons">upload</span> ファイルを追加
-            </button>
-        </div>
-
+        <h2 style="margin-bottom: 16px;">ファイル一覧</h2>
         <div class="file-list" id="file-list">
             <!-- ファイルが動的に読み込まれます -->
         </div>
@@ -61,6 +51,10 @@
         <div class="modal-content">
             <div class="modal-body">
                 <h3 style="margin-top: 0;">ファイルをアップロード</h3>
+                <div class="form-group">
+                    <label>投稿者名（5文字以上・日本語/英語/数字のみ）</label>
+                    <input type="text" id="file-author" placeholder="例: まろんガジェット">
+                </div>
                 <div class="form-group">
                     <label>タイトル</label>
                     <input type="text" id="file-title" placeholder="例: maroidOS v1.0.apk">
@@ -82,20 +76,6 @@
     </div>
 
     <script>
-        async function checkUser() {
-            try {
-                const res = await fetch('/api/user');
-                if (res.ok) {
-                    const user = await res.json();
-                    document.getElementById('user-area').innerHTML = `
-                        <a href="/account.html" style="color: white; text-decoration: none; font-size: 14px; margin-right: 8px;">👤 ${user.username}</a>
-                        <a href="/logout" style="color: #ff8080; font-size: 12px; text-decoration: none;">ログアウト</a>
-                    `;
-                    document.getElementById('upload-btn').style.display = 'inline-flex';
-                }
-            } catch (e) {}
-        }
-
         async function loadFiles() {
             try {
                 const res = await fetch('/api/files');
@@ -121,6 +101,7 @@
                             <a href="${file.fileUrl}" target="_blank" class="btn">
                                 <span class="material-icons" style="font-size: 18px;">download</span> ダウンロード
                             </a>
+                            <button class="btn btn-secondary" onclick="deleteFile('${file.id}')" style="background-color: #ffcccc; color: #d32f2f;">削除</button>
                         </div>
                     `;
                     list.appendChild(item);
@@ -130,13 +111,31 @@
             }
         }
 
+        async function deleteFile(id) {
+            if (!confirm('このファイルを削除しますか？')) return;
+            const res = await fetch(`/api/files/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                loadFiles();
+            } else {
+                alert('削除に失敗しました。');
+            }
+        }
+
         function openModal() { document.getElementById('upload-modal').style.display = 'flex'; }
         function closeModal() { document.getElementById('upload-modal').style.display = 'none'; }
 
         async function submitFile() {
+            const author = document.getElementById('file-author').value;
             const title = document.getElementById('file-title').value;
             const fileInput = document.getElementById('file-input');
             const description = document.getElementById('file-desc').value;
+
+            // クライアント側での入力チェック（5文字以上、日本語・英数字のみ）
+            const authorRegex = /^[ぁ-んァ-ンー一-龠a-zA-Z0-9]{5,}$/;
+            if (!authorRegex.test(author)) {
+                alert('投稿者名は5文字以上の日本語・英語・数字のみで入力してください。');
+                return;
+            }
 
             if (!title || fileInput.files.length === 0) {
                 alert('タイトルとファイルを選択してください。');
@@ -144,6 +143,7 @@
             }
 
             const formData = new FormData();
+            formData.append('author', author);
             formData.append('title', title);
             formData.append('description', description);
             formData.append('file', fileInput.files[0]);
@@ -155,16 +155,17 @@
 
             if (res.ok) {
                 closeModal();
+                document.getElementById('file-author').value = '';
                 document.getElementById('file-title').value = '';
                 document.getElementById('file-input').value = '';
                 document.getElementById('file-desc').value = '';
                 loadFiles();
             } else {
-                alert('アップロードに失敗しました。');
+                const data = await res.json();
+                alert(data.error || 'アップロードに失敗しました。');
             }
         }
 
-        checkUser();
         loadFiles();
     </script>
 </body>
