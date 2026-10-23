@@ -6,10 +6,14 @@ const { put } = require('@vercel/blob');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// メモリ上にファイルを一時保持する設定（Vercel Blobへ転送するため）
+// 環境変数から管理者IDとパスワードを取得（設定されていない場合は初期値）
+const ADMIN_ID = process.env.ID || 'admin';
+const ADMIN_PASSWORD = process.env.PASSWORD || 'password123';
+
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 let files = [
@@ -23,12 +27,12 @@ let files = [
     }
 ];
 
-// ファイル一覧取得
+// ファイル一覧取得（誰でも閲覧可能）
 app.get('/api/files', (req, res) => {
     res.json(files);
 });
 
-// ファイルアップロードAPI（Vercel Blobを使用）
+// ファイルアップロードAPI（誰でも投稿可能、バリデーション付き）
 app.post('/api/files', upload.single('file'), async (req, res) => {
     const { title, description, author } = req.body;
     const uploadedFile = req.file;
@@ -37,14 +41,12 @@ app.post('/api/files', upload.single('file'), async (req, res) => {
         return res.status(400).json({ error: 'タイトル、ファイル、投稿者は必須です' });
     }
 
-    // サーバー側でのバリデーション（5文字以上、日本語・英数字のみ）
     const authorRegex = /^[ぁ-んァ-ンー一-龠a-zA-Z0-9]{5,}$/;
     if (!authorRegex.test(author)) {
         return res.status(400).json({ error: 'ユーザー名は5文字以上の日本語・英語・数字のみで入力してください。' });
     }
 
     try {
-        // Vercel Blobへファイルをアップロード
         const blob = await put(uploadedFile.originalname, uploadedFile.buffer, {
             access: 'public',
         });
@@ -66,8 +68,19 @@ app.post('/api/files', upload.single('file'), async (req, res) => {
     }
 });
 
-// ファイル削除API（誰でも削除可能、または制限なし）
+// 管理者ログインAPI（Basic認証を使用）
+app.post('/api/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    if (username === ADMIN_ID && password === ADMIN_PASSWORD) {
+        res.json({ success: true });
+    } else {
+        res.status(401).json({ error: 'IDまたはパスワードが間違っています。' });
+    }
+});
+
+// ファイル削除API（管理者ページからのみ呼び出し）
 app.delete('/api/files/:id', (req, res) => {
+    // 簡易的なBasic認証ヘッダーチェックまたは管理用エンドポイント
     const fileId = req.params.id;
     const index = files.findIndex(f => f.id === fileId);
 

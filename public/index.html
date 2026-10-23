@@ -10,6 +10,7 @@
         body { font-family: 'Roboto', sans-serif; margin: 0; background-color: #f5f5f5; color: #212121; }
         header { background-color: #6200ee; color: white; padding: 12px 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center; }
         header h1 { margin: 0; font-size: 20px; font-weight: 500; }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
         .btn { background-color: #03dac6; color: #000; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 500; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 2px rgba(0,0,0,0.2); }
         .btn-secondary { background-color: #e0e0e0; color: #333; box-shadow: none; }
         .container { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
@@ -18,8 +19,7 @@
         .file-info h3 { margin: 0 0 4px 0; font-size: 18px; color: #333; }
         .file-meta { font-size: 12px; color: #757575; margin-bottom: 8px; }
         .file-desc { font-size: 14px; color: #555; margin: 0; }
-        .file-actions { display: flex; gap: 8px; }
-
+        
         /* モーダル */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; width: 90%; max-width: 500px; border-radius: 4px; overflow: hidden; box-shadow: 0 11px 15px -7px rgba(0,0,0,0.2); }
@@ -34,16 +34,17 @@
 
     <header>
         <h1>DchaFiles</h1>
-        <button class="btn" onclick="openModal()">
-            <span class="material-icons">upload</span> ファイルを追加
-        </button>
+        <div class="header-actions">
+            <a href="/admin.html" style="color: white; font-size: 13px; text-decoration: none;">管理者ページ</a>
+            <button class="btn" onclick="openModal()">
+                <span class="material-icons">upload</span> ファイルを追加
+            </button>
+        </div>
     </header>
 
     <div class="container">
         <h2 style="margin-bottom: 16px;">ファイル一覧</h2>
-        <div class="file-list" id="file-list">
-            <!-- ファイルが動的に読み込まれます -->
-        </div>
+        <div class="file-list" id="file-list"></div>
     </div>
 
     <!-- アップロードモーダル -->
@@ -101,23 +102,12 @@
                             <a href="${file.fileUrl}" target="_blank" class="btn">
                                 <span class="material-icons" style="font-size: 18px;">download</span> ダウンロード
                             </a>
-                            <button class="btn btn-secondary" onclick="deleteFile('${file.id}')" style="background-color: #ffcccc; color: #d32f2f;">削除</button>
                         </div>
                     `;
                     list.appendChild(item);
                 });
             } catch (e) {
                 console.error(e);
-            }
-        }
-
-        async function deleteFile(id) {
-            if (!confirm('このファイルを削除しますか？')) return;
-            const res = await fetch(`/api/files/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                loadFiles();
-            } else {
-                alert('削除に失敗しました。');
             }
         }
 
@@ -130,7 +120,6 @@
             const fileInput = document.getElementById('file-input');
             const description = document.getElementById('file-desc').value;
 
-            // クライアント側での入力チェック（5文字以上、日本語・英数字のみ）
             const authorRegex = /^[ぁ-んァ-ンー一-龠a-zA-Z0-9]{5,}$/;
             if (!authorRegex.test(author)) {
                 alert('投稿者名は5文字以上の日本語・英語・数字のみで入力してください。');

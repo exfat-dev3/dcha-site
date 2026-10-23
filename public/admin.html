@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DchaFiles - 管理者ページ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto', sans-serif; margin: 0; background-color: #f5f5f5; color: #212121; }
+        header { background-color: #3700b3; color: white; padding: 12px 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 20px; font-weight: 500; }
+        .btn { background-color: #03dac6; color: #000; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 500; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 2px rgba(0,0,0,0.2); }
+        .btn-danger { background-color: #ff5252; color: white; }
+        .container { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+        .file-list { display: flex; flex-direction: column; gap: 12px; }
+        .file-card { background: white; border-radius: 4px; padding: 16px 20px; box-shadow: 0 2px 1px -1px rgba(0,0,0,0.2), 0 1px 1px 0 rgba(0,0,0,0.14), 0 1px 3px 0 rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; }
+        .file-info h3 { margin: 0 0 4px 0; font-size: 18px; color: #333; }
+        .file-meta { font-size: 12px; color: #757575; margin-bottom: 8px; }
+        
+        /* ログインモーダル */
+        .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 4px; overflow: hidden; box-shadow: 0 11px 15px -7px rgba(0,0,0,0.2); }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 12px 20px; display: flex; justify-content: flex-end; gap: 12px; background-color: #fafafa; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 14px; margin-bottom: 6px; color: #666; }
+        .form-group input { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>DchaFiles 管理画面</h1>
+        <a href="/" style="color: white; font-size: 14px; text-decoration: none;">← サイトに戻る</a>
+    </header>
+
+    <!-- ログインモーダル -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <div class="modal-body">
+                <h3 style="margin-top: 0;">管理者ログイン</h3>
+                <div class="form-group">
+                    <label>管理者ID</label>
+                    <input type="text" id="admin-id" placeholder="IDを入力">
+                </div>
+                <div class="form-group">
+                    <label>パスワード</label>
+                    <input type="password" id="admin-password" placeholder="パスワードを入力">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="loginAdmin()">ログイン</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="admin-container" style="display: none;">
+        <h2 style="margin-bottom: 16px;">ファイル管理・削除</h2>
+        <div class="file-list" id="file-list"></div>
+    </div>
+
+    <script>
+        async function loginAdmin() {
+            const username = document.getElementById('admin-id').value;
+            const password = document.getElementById('admin-password').value;
+
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (res.ok) {
+                document.getElementById('login-modal').style.display = 'none';
+                document.getElementById('admin-container').style.display = 'block';
+                loadAdminFiles();
+            } else {
+                alert('IDまたはパスワードが間違っています。');
+            }
+        }
+
+        async function loadAdminFiles() {
+            try {
+                const res = await fetch('/api/files');
+                const files = await res.json();
+                const list = document.getElementById('file-list');
+                list.innerHTML = '';
+
+                if (files.length === 0) {
+                    list.innerHTML = '<p style="color: #666; text-align: center;">ファイルはまだありません。</p>';
+                    return;
+                }
+
+                files.forEach(file => {
+                    const item = document.createElement('div');
+                    item.className = 'file-card';
+                    item.innerHTML = `
+                        <div class="file-info" style="flex: 1; margin-right: 16px;">
+                            <h3>${file.title}</h3>
+                            <div class="file-meta">投稿者: ${file.author} | 追加日: ${file.createdAt}</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-danger" onclick="deleteFile('${file.id}')">
+                                <span class="material-icons" style="font-size: 18px;">delete</span> 削除
+                            </button>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function deleteFile(id) {
+            if (!confirm('本当にこのファイルを削除しますか？')) return;
+            const res = await fetch(`/api/files/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                loadAdminFiles();
+            } else {
+                alert('削除に失敗しました。');
+            }
+        }
+    </script>
+</body>
+</html>
